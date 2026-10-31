@@ -1,5 +1,5 @@
 import React, {useRef, useState, useEffect} from 'react';
-import {View, Text, Pressable, Image, StyleSheet, PanResponder, AppState, Alert, Linking, Animated, useWindowDimensions} from 'react-native';
+import {View, Text, Pressable, Image, StyleSheet, PanResponder, AppState, Alert, Linking, Animated, Platform, useWindowDimensions} from 'react-native';
 import {CameraView, useCameraPermissions} from 'expo-camera';
 import {Skia, BlendMode, ImageFormat} from '@shopify/react-native-skia';
 import {captureRef, releaseCapture} from 'react-native-view-shot';
@@ -148,7 +148,9 @@ export default function Double(){
   }
   setMode(value => (value + 1) % MODES.length);
  }
- async function save(){if(lock.current||!loaded||!output||rendering)return;lock.current=true;setBusy(true);let exported;try{exported=await captureRef(result,{format:'jpg',quality:1,result:'tmpfile'});const uri=exported;if(await Sharing.isAvailableAsync())await Sharing.shareAsync(uri,{mimeType:'image/jpeg',UTI:'public.jpeg'});else Alert.alert('Sharing unavailable','Try this prototype on your iPhone.')}catch(e){if(e?.name!=='AbortError')Alert.alert('Could not share','Your photos are still here. Try again.')}finally{if(exported)releaseCapture(exported);lock.current=false;setBusy(false)}}
+ // Web: the blend is already a full-resolution JPEG data URI, so share or download it directly.
+ async function saveWeb(){const blob=await (await fetch(output)).blob();const file=new File([blob],`double-${Date.now()}.jpg`,{type:'image/jpeg'});if(navigator.canShare?.({files:[file]})){try{await navigator.share({files:[file]})}catch(e){if(e?.name!=='AbortError')throw e}return}const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+ async function save(){if(lock.current||!loaded||!output||rendering)return;lock.current=true;setBusy(true);if(Platform.OS==='web'){try{await saveWeb()}catch(e){Alert.alert('Could not save','Your photos are still here. Try again.')}finally{lock.current=false;setBusy(false)}return}let exported;try{exported=await captureRef(result,{format:'jpg',quality:1,result:'tmpfile'});const uri=exported;if(await Sharing.isAvailableAsync())await Sharing.shareAsync(uri,{mimeType:'image/jpeg',UTI:'public.jpeg'});else Alert.alert('Sharing unavailable','Try this prototype on your iPhone.')}catch(e){if(e?.name!=='AbortError')Alert.alert('Could not share','Your photos are still here. Try again.')}finally{if(exported)releaseCapture(exported);lock.current=false;setBusy(false)}}
  function undo(){if(lock.current)return;if(second){setSecond(null);setReady(false)}else setFirst(null)}
  const button = (label, action, disabled = false, secondary = false, icon = null) => (
   <Pressable accessibilityRole="button" accessibilityLabel={label} disabled={disabled} onPress={action} style={[styles.button, icon && styles.iconButton, disabled && {opacity: .35}]}>
