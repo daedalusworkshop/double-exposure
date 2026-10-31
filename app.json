@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "Double",
+    "slug": "double-exposure",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#080808",
+    "ios": {
+      "supportsTablet": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png"
+    },
+    "experiments": {
+      "baseUrl": "/double-exposure"
+    },
+    "plugins": [
+      "expo-sharing"
+    ]
+  }
+}
